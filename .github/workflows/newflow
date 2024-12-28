@@ -1,0 +1,57 @@
+name: Test Build
+
+on:
+  # Uncomment the following lines to enable triggers on push and pull requests
+  # push:
+  #   branches:
+  #     - main
+  # pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        java-version: ['22']  # Ensure using Java version that is compatible with Gradle 8.8
+
+    steps:
+      - name: Set up JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin' # Use Temurin distribution for better compatibility
+          java-version: ${{ matrix.java-version }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build With Gradle
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --build-cache --parallel --daemon --warning-mode all
+        env:
+          GRADLE_OPTS: '-Dorg.gradle.java.home=/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/${{ matrix.java-version }}/x64'
+
+      - name: Prepare App
+        run: |
+          mkdir -p ${{ github.workspace }}/apk/
+          find . -type f -name "*.apk" -exec mv {} ${{ github.workspace }}/apk/ \;
+
+      - name: Upload App To Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: com.github.tvbox.osc
+          path: ${{ github.workspace }}/apk/*
