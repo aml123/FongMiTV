@@ -1,11 +1,6 @@
 name: Test Build
 
 on:
-  # Uncomment the following lines to enable triggers on push and pull requests
-  # push:
-  #   branches:
-  #     - main
-  # pull_request:
   workflow_dispatch:
 
 jobs:
@@ -42,8 +37,6 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --build-cache --parallel --daemon --warning-mode all
-        env:
-          GRADLE_OPTS: '-Dorg.gradle.java.home=/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/${{ matrix.java-version }}/x64'
 
       - name: Prepare App
         run: |
